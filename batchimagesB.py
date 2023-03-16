@@ -155,7 +155,7 @@ class Script(scripts.Script):
 
     def ui(self, is_txt2img):
 
-        keep_src_hash = gr.Checkbox(label="Keep source image Model Hash", elem_di=self.elem_id("keep_src_hash"))
+        keep_src_hash = gr.Checkbox(label="Keep source image Model Hash", elem_id=self.elem_id("keep_src_hash"))
         prepend_prompt_text = gr.Textbox(label="Text to prepend", lines=1, elem_id=self.elem_id("prepend_prompt_text"))
         append_prompt = gr.Checkbox(label="Append text instead", elem_di=self.elem_id("append_prompt"))
         prompt_txt = gr.Textbox(label="List of prompt inputs", lines=1, elem_id=self.elem_id("prompt_txt"))
@@ -264,11 +264,13 @@ class Script(scripts.Script):
                         except ValueError:
                             continue
 
+                        if prepend_prompt_text != '':
+                            if append_prompt:
+                                formated_args['prompt'] = formated_args.get('prompt', '') + ' ,' + prepend_prompt_text
+                            else:
+                                formated_args['prompt'] = prepend_prompt_text + ', ' + formated_args.get('prompt', '')
+
                         job_count += formated_args.get("n_iter", p.n_iter * formated_args.get('batch_size', 1))
-                        if append_prompt:
-                            formated_args['prompt'] = formated_args.get('prompt', '') + ' ,' + prepend_prompt_text
-                        else:
-                            formated_args['prompt'] = prepend_prompt_text + ', ' + formated_args.get('prompt', '')
                         jobs.append(formated_args)
                         overrides.append(override_settings)
 
