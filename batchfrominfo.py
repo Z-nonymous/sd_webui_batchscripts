@@ -1,12 +1,11 @@
-import modules.scripts as scripts
-import gradio as gr
-import os
 import copy
 
-from modules import images, shared
-from modules.processing import process_images, Processed
+import gradio as gr
+import modules.scripts as scripts
+from modules import shared
 from modules.processing import Processed
-from modules.shared import opts, cmd_opts, state
+from modules.processing import process_images
+from modules.shared import state
 
 
 def load_prompt_file(file):
