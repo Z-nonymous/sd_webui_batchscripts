@@ -1,12 +1,12 @@
-import modules.scripts as scripts
-import gradio as gr
-import os
 import copy
+import os
 
-from modules import images, shared
-from modules.processing import process_images, Processed
+import gradio as gr
+import modules.scripts as scripts
+from modules import shared
 from modules.processing import Processed
-from modules.shared import opts, cmd_opts, state
+from modules.processing import process_images
+from modules.shared import state
 
 
 def load_prompt_file(file):
@@ -155,7 +155,9 @@ class Script(scripts.Script):
 
     def ui(self, is_txt2img):
 
-        keep_src_hash = gr.Checkbox(label="Keep source image Model Hash")
+        keep_src_hash = gr.Checkbox(label="Keep source image Model Hash", elem_id=self.elem_id("keep_src_hash"))
+        prepend_prompt_text = gr.Textbox(label="Text to prepend", lines=1, elem_id=self.elem_id("prepend_prompt_text"))
+        append_prompt = gr.Checkbox(label="Append text instead", elem_di=self.elem_id("append_prompt"))
         prompt_txt = gr.Textbox(label="List of prompt inputs", lines=1, elem_id=self.elem_id("prompt_txt"))
         file = gr.File(label="Upload prompt inputs", type='binary', elem_id=self.elem_id("file"))
 
@@ -166,7 +168,7 @@ class Script(scripts.Script):
         # be unclear to the user that shift-enter is needed.
         prompt_txt.change(lambda tb: gr.update(lines=7) if ("\n" in tb) else gr.update(lines=2), inputs=[prompt_txt],
                           outputs=[prompt_txt])
-        return [keep_src_hash, prompt_txt]
+        return [keep_src_hash, prepend_prompt_text, append_prompt, prompt_txt]
 
     # This is where the additional processing is implemented. The parameters include
     # self, the model object "p" (a StableDiffusionProcessing class, see
@@ -175,7 +177,7 @@ class Script(scripts.Script):
     # to be used in processing. The return value should be a Processed object, which is
     # what is returned by the process_images method.
 
-    def run(self, p, keep_src_hash, prompt_txt: str):
+    def run(self, p, keep_src_hash: bool, prepend_prompt_text: str, append_prompt: bool, prompt_txt: str):
 
         import modules.images as img
         import modules.generation_parameters_copypaste as gpc
@@ -199,6 +201,10 @@ class Script(scripts.Script):
             if line.startswith('"'):
                 parts = line.split('" ')
                 chemin = parts[0].strip('"')
+                try:
+                    or_batchsize = parts[1].strip('"')
+                except IndexError:
+                    or_batchsize = '1'
 
                 if os.path.isfile(chemin):
                     formated_args = {}
@@ -242,7 +248,7 @@ class Script(scripts.Script):
                         else:
                             formated_args['enable_hr'] = False
 
-                        if (formated_args.get('face_restoration_model', False)):
+                        if formated_args.get('face_restoration_model', False):
                             formated_args['restore_faces'] = True
 
                         override_settings = {}
@@ -253,11 +259,16 @@ class Script(scripts.Script):
                                 continue
                             override_settings[setting_name] = shared.opts.cast_value(setting_name, value)
 
-                        func = prompt_tags.get('batch_size', None)
                         try:
-                            formated_args['batch_size'] = int(parts[1].strip('"'))
+                            formated_args['batch_size'] = int(or_batchsize)
                         except ValueError:
                             continue
+
+                        if prepend_prompt_text != '':
+                            if append_prompt:
+                                formated_args['prompt'] = formated_args.get('prompt', '') + ' ,' + prepend_prompt_text
+                            else:
+                                formated_args['prompt'] = prepend_prompt_text + ', ' + formated_args.get('prompt', '')
 
                         job_count += formated_args.get("n_iter", p.n_iter * formated_args.get('batch_size', 1))
                         jobs.append(formated_args)
