@@ -57,7 +57,8 @@ arg_mapping = {
     'Variation seed': 'subseed',
     'Variation seed strength': 'subseed_strength',
     'Face restoration': 'face_restoration_model',
-    'Mask blur': 'mask_blur'
+    'Mask blur': 'mask_blur',
+    'Seed resize from': 'skip-14'
 }
 
 override_list = [
@@ -197,23 +198,8 @@ class Script(scripts.Script):
             res = gpc.parse_generation_parameters(block)
             args = update_dict_keys(res, arg_mapping)
 
-            args.pop('skip-1', None)
-            args.pop('skip-2', None)
-            args.pop('skip-3', None)
-            args.pop('skip-3', None)
-            args.pop('skip-4', None)
-            args.pop('skip-5', None)
-            args.pop('skip-6', None)
-            args.pop('skip-7', None)
-            args.pop('skip-8', None)
-            args.pop('skip-9', None)
-            args.pop('skip-10', None)
-            args.pop('skip-11', None)
-            args.pop('skip-12', None)
-            args.pop('skip-13', None)
-            args.pop('skip-14', None)
-            args.pop('skip-15', None)
-            args.pop('skip-16', None)
+            for i in range(1, 21):
+                args.pop(f'skip-{i}', None)
 
             if not keep_src_hash:
                 args.pop('sd_model_hash', None)
