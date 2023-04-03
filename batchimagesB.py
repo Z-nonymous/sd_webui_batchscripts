@@ -58,7 +58,8 @@ arg_mapping = {
     'Variation seed': 'subseed',
     'Variation seed strength': 'subseed_strength',
     'Face restoration': 'face_restoration_model',
-    'Mask blur': 'mask_blur'
+    'Mask blur': 'mask_blur',
+    'Seed resize from': 'seed_resize'
 }
 
 override_list = [
@@ -87,6 +88,11 @@ def process_float_tag(tag):
 
 def process_boolean_tag(tag):
     return True if (tag == "true") else False
+
+
+def process_seedresize_tag(tag):
+    sp = tag.split('x')
+    return (int(sp[0]), int(sp[1]))
 
 
 prompt_tags = {
@@ -128,7 +134,8 @@ prompt_tags = {
     "eta_ddim": process_float_tag,
     "denoising_strength": process_float_tag,
     "face_restoration_model": process_string_tag,
-    "mask_blur": process_int_tag
+    "mask_blur": process_int_tag,
+    "seed_resize": process_seedresize_tag
 }
 
 
@@ -216,23 +223,8 @@ class Script(scripts.Script):
                         res = gpc.parse_generation_parameters(info[0])
                         args = update_dict_keys(res, arg_mapping)
 
-                        args.pop('skip-1', None)
-                        args.pop('skip-2', None)
-                        args.pop('skip-3', None)
-                        args.pop('skip-3', None)
-                        args.pop('skip-4', None)
-                        args.pop('skip-5', None)
-                        args.pop('skip-6', None)
-                        args.pop('skip-7', None)
-                        args.pop('skip-8', None)
-                        args.pop('skip-9', None)
-                        args.pop('skip-10', None)
-                        args.pop('skip-11', None)
-                        args.pop('skip-12', None)
-                        args.pop('skip-13', None)
-                        args.pop('skip-14', None)
-                        args.pop('skip-15', None)
-                        args.pop('skip-16', None)
+                        for i in range(1, 21):
+                            args.pop(f'skip-{i}', None)
 
                         if not keep_src_hash:
                             args.pop('sd_model_hash', None)
@@ -250,6 +242,12 @@ class Script(scripts.Script):
 
                         if formated_args.get('face_restoration_model', False):
                             formated_args['restore_faces'] = True
+
+                        seed_resize = formated_args.get('seed_resize', None)
+                        if seed_resize:
+                            formated_args['seed_resize_from_w'] = seed_resize[0]
+                            formated_args['seed_resize_from_h'] = seed_resize[1]
+                            formated_args.pop('restore_faces', None)
 
                         override_settings = {}
 
@@ -297,6 +295,3 @@ class Script(scripts.Script):
             infotexts += proc.infotexts
 
         return Processed(p, images, p.seed, "", all_prompts=all_prompts, infotexts=infotexts)
-
-        # proc = process_images(p)
-        # return proc

@@ -58,7 +58,7 @@ arg_mapping = {
     'Variation seed strength': 'subseed_strength',
     'Face restoration': 'face_restoration_model',
     'Mask blur': 'mask_blur',
-    'Seed resize from': 'skip-14'
+    'Seed resize from': 'seed_resize'
 }
 
 override_list = [
@@ -88,6 +88,10 @@ def process_float_tag(tag):
 def process_boolean_tag(tag):
     return True if (tag == "true") else False
 
+
+def process_seedresize_tag(tag):
+    sp = tag.split('x')
+    return (int(sp[0]), int(sp[1]))
 
 prompt_tags = {
     "sd_model": None,
@@ -128,7 +132,8 @@ prompt_tags = {
     "eta_ddim": process_float_tag,
     "denoising_strength": process_float_tag,
     "face_restoration_model": process_string_tag,
-    "mask_blur": process_int_tag
+    "mask_blur": process_int_tag,
+    "seed_resize": process_seedresize_tag
 }
 
 
@@ -217,6 +222,12 @@ class Script(scripts.Script):
 
             if formated_args.get('face_restoration_model', False):
                 formated_args['restore_faces'] = True
+
+            seed_resize = formated_args.get('seed_resize', None)
+            if seed_resize:
+                formated_args['seed_resize_from_w'] = seed_resize[0]
+                formated_args['seed_resize_from_h'] = seed_resize[1]
+                formated_args.pop('restore_faces', None)
 
             override_settings = {}
 
