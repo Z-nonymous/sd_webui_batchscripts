@@ -138,6 +138,18 @@ prompt_tags = {
     "seed_resize": process_seedresize_tag
 }
 
+overrides_mapping = {
+    "Override Model": "sd_model_hash",
+    "Override Seed": "seed",
+    "Override Steps": "steps",
+    "Override CFG Scale": "cfg_scale",
+    "Override Sampler": "sampler_name",
+    "Override Width": "width",
+    "Override Height": "height"
+}
+possible_overrides = list(overrides_mapping.keys())
+default_overrides = ["Override Model"]
+
 
 class Script(scripts.Script):
 
@@ -162,9 +174,11 @@ class Script(scripts.Script):
 
     def ui(self, is_txt2img):
 
-        keep_src_hash = gr.Checkbox(label="Keep source image Model Hash", elem_id=self.elem_id("keep_src_hash"))
-        prepend_prompt_text = gr.Textbox(label="Text to prepend", lines=1, elem_id=self.elem_id("prepend_prompt_text"))
-        append_prompt = gr.Checkbox(label="Append text instead", elem_di=self.elem_id("append_prompt"))
+        script_overrides = gr.CheckboxGroup(label="Overrides", choices=possible_overrides, value=default_overrides)
+        with gr.Accordion(label="Prompt overrides", open=False):
+            prepend_prompt_text = gr.Textbox(label="Text to prepend", lines=1, elem_id=self.elem_id("prepend_prompt_text"))
+            append_prompt = gr.Checkbox(label="Append text instead", elem_id=self.elem_id("append_prompt"))
+
         prompt_txt = gr.Textbox(label="List of prompt inputs", lines=1, elem_id=self.elem_id("prompt_txt"))
         file = gr.File(label="Upload prompt inputs", type='binary', elem_id=self.elem_id("file"))
 
@@ -175,7 +189,7 @@ class Script(scripts.Script):
         # be unclear to the user that shift-enter is needed.
         prompt_txt.change(lambda tb: gr.update(lines=7) if ("\n" in tb) else gr.update(lines=2), inputs=[prompt_txt],
                           outputs=[prompt_txt])
-        return [keep_src_hash, prepend_prompt_text, append_prompt, prompt_txt]
+        return [prepend_prompt_text, append_prompt, prompt_txt, script_overrides]
 
     # This is where the additional processing is implemented. The parameters include
     # self, the model object "p" (a StableDiffusionProcessing class, see
@@ -184,7 +198,7 @@ class Script(scripts.Script):
     # to be used in processing. The return value should be a Processed object, which is
     # what is returned by the process_images method.
 
-    def run(self, p, keep_src_hash: bool, prepend_prompt_text: str, append_prompt: bool, prompt_txt: str):
+    def run(self, p, prepend_prompt_text: str, append_prompt: bool, prompt_txt: str, script_overrides: list[str]):
 
         import modules.images as img
         import modules.generation_parameters_copypaste as gpc
@@ -226,8 +240,10 @@ class Script(scripts.Script):
                         for i in range(1, 21):
                             args.pop(f'skip-{i}', None)
 
-                        if not keep_src_hash:
-                            args.pop('sd_model_hash', None)
+                        for ovr in possible_overrides:
+                            if ovr in script_overrides:
+                                print(f'{ovr} {overrides_mapping.get(ovr, None)}')
+                                args.pop(overrides_mapping.get(ovr, None))
 
                         for arg, val in args.items():
                             func = prompt_tags.get(arg, None)
