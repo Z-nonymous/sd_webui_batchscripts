@@ -1,5 +1,6 @@
 # sd_webui_batchscripts
-Some batch scripts for use with stable-diffusion-webui 
+Some batch scripts for use with stable-diffusion-webui
+All scripts require script_common.py
 
 ---
 
@@ -7,6 +8,7 @@ Some batch scripts for use with stable-diffusion-webui
 A custom script to use a list of images (containing generation parameters in png info) as a source for txt2img
 
 This will help when you want to regenerate with a new model a bunch of images you previously generated.
+You can choose to override some parameters with the settings in the UI (Seed, Steps, CFG Scale, Sampler, width, height)
 
 The source textfile or input box must have one path to file per line
 
@@ -27,6 +29,7 @@ Same as batchimagesA.py, but with support for a different batch_size per image.
 A custom script to use a list of images (containing generation parameters in png info) as a source for txt2img
 
 This will help when you want to regenerate with a new model a bunch of images you previously generated.
+You can choose to override some parameters with the settings in the UI (Seed, Steps, CFG Scale, Sampler, width, height)
 
 The source textfile or input box must have one path to file per line between quotes then a space then the `batch_size`
 
