@@ -3,12 +3,11 @@ import os
 
 import gradio as gr
 import modules.scripts as scripts
+import scripts.script_common as sc
 from modules import shared
-
 from modules.processing import Processed
 from modules.processing import process_images
 from modules.shared import state
-from scripts.script_common import *
 
 
 def load_prompt_file(file):
@@ -18,6 +17,7 @@ def load_prompt_file(file):
         lines = [x.strip() for x in file.decode('utf8', errors='ignore').split("\n")]
 
     return None, "\n".join(lines), gr.update(lines=7)
+
 
 class Script(scripts.Script):
 
@@ -42,7 +42,7 @@ class Script(scripts.Script):
 
     def ui(self, is_txt2img):
 
-        script_overrides = gr.CheckboxGroup(label="Overrides", choices=possible_overrides, value=default_overrides)
+        script_overrides = gr.CheckboxGroup(label="Overrides", choices=sc.possible_overrides, value=sc.default_overrides)
         with gr.Accordion(label="Prompt overrides", open=False):
             prepend_prompt_text = gr.Textbox(label="Text to prepend", lines=1, elem_id=self.elem_id("prepend_prompt_text"))
             append_prompt = gr.Checkbox(label="Append text instead", elem_id=self.elem_id("append_prompt"))
@@ -70,12 +70,22 @@ class Script(scripts.Script):
 
         import modules.images as img
         import modules.generation_parameters_copypaste as gpc
+        from modules import sd_models as sdm
 
         def update_dict_keys(obj, mapping_dict):
             if isinstance(obj, dict):
                 return {mapping_dict[k]: update_dict_keys(v, mapping_dict) for k, v in obj.items()}
             else:
                 return obj
+
+        def apply_checkpoint(x):
+            info = sdm.get_closet_checkpoint_match(x)
+            if info is None:
+                raise RuntimeError(f"Unknown checkpoint: {x}")
+            sdm.reload_model_weights(shared.sd_model, info)
+
+        fallback_checkpoint = shared.opts.sd_model_checkpoint
+        checkpoint_switched = False
 
         lines = [x.strip() for x in prompt_txt.splitlines()]
         lines = [x for x in lines if len(x) > 0]
@@ -103,17 +113,17 @@ class Script(scripts.Script):
                     if data:
                         info = img.image_data(data)
                         res = gpc.parse_generation_parameters(info[0])
-                        args = update_dict_keys(res, arg_mapping)
+                        args = update_dict_keys(res, sc.arg_mapping)
 
                         for i in range(1, 21):
                             args.pop(f'skip-{i}', None)
 
-                        for ovr in possible_overrides:
+                        for ovr in sc.possible_overrides:
                             if ovr in script_overrides:
-                                args.pop(overrides_mapping.get(ovr, None))
+                                args.pop(sc.overrides_mapping.get(ovr, None))
 
                         for arg, val in args.items():
-                            func = prompt_tags.get(arg, None)
+                            func = sc.prompt_tags.get(arg, None)
                             assert func, f'unknown file setting: {arg}'
                             formated_args[arg] = func(val)
 
@@ -134,7 +144,7 @@ class Script(scripts.Script):
 
                         override_settings = {}
 
-                        for setting_name in override_list:
+                        for setting_name in sc.override_list:
                             value = formated_args.pop(setting_name, None)
                             if value is None:
                                 continue
@@ -160,21 +170,41 @@ class Script(scripts.Script):
         images = []
         all_prompts = []
         infotexts = []
-        for n, args in enumerate(jobs):
-            state.job = f"{state.job_no + 1} out of {state.job_count}"
 
-            copy_p = copy.copy(p)
-            for k, v in args.items():
-                setattr(copy_p, k, v)
+        def process_runlist(jobs, images, all_prompts, infotexts):
+            for n, args in enumerate(jobs):
+                state.job = f"{state.job_no + 1} out of {state.job_count}"
 
-            copy_p.override_settings = overrides[n]
-            copy_p.override_settings_restore_afterwards = True
-            copy_p.extra_generation_params = {}
+                copy_p = copy.copy(p)
+                for k, v in args.items():
+                    setattr(copy_p, k, v)
 
-            proc = process_images(copy_p)
-            images += proc.images
+                copy_p.override_settings = overrides[n]
+                copy_p.override_settings_restore_afterwards = True
+                copy_p.extra_generation_params = {}
 
-            all_prompts += proc.all_prompts
-            infotexts += proc.infotexts
+                proc = process_images(copy_p)
+                images += proc.images
+
+                all_prompts += proc.all_prompts
+                infotexts += proc.infotexts
+
+        models_to_use = {j.get('sd_model_hash') for j in jobs}
+        runs_list = {}
+        for model in models_to_use:
+            runs_list[model] = [j for j in jobs if j.get('sd_model_hash') == model]
+        if None in runs_list.keys():
+            process_runlist(runs_list[None], images, all_prompts, infotexts)
+            runs_list.pop(None)
+        if fallback_checkpoint in runs_list.keys():
+            process_runlist(runs_list[fallback_checkpoint], images, all_prompts, infotexts)
+            runs_list.pop(fallback_checkpoint)
+        for model in runs_list.keys():
+            apply_checkpoint(model)
+            checkpoint_switched = True
+            process_runlist(runs_list[model], images, all_prompts, infotexts)
+        if checkpoint_switched:
+            apply_checkpoint(fallback_checkpoint)
+
 
         return Processed(p, images, p.seed, "", all_prompts=all_prompts, infotexts=infotexts)

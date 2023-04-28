@@ -1,5 +1,3 @@
-from modules import sd_models
-
 arg_mapping = {
     'Prompt': 'prompt',
     'Negative prompt': 'negative_prompt',
@@ -130,10 +128,3 @@ overrides_mapping = {
 }
 possible_overrides = list(overrides_mapping.keys())
 default_overrides = ["Override Model"]
-
-
-def apply_checkpoint(p, x, xs):
-    info = modules.sd_models.get_closet_checkpoint_match(x)
-    if info is None:
-        raise RuntimeError(f"Unknown checkpoint: {x}")
-    modules.sd_models.reload_model_weights(shared.sd_model, info)
