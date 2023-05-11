@@ -2,6 +2,8 @@
 Some batch scripts for use with stable-diffusion-webui
 All scripts require script_common.py
 
+Install as an extension from webui
+
 ---
 
 ## batchimagesA.py
