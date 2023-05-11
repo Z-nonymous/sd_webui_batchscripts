@@ -42,7 +42,7 @@ class Script(scripts.Script):
 
     def ui(self, is_txt2img):
 
-        script_overrides = gr.CheckboxGroup(label="Overrides", choices=possible_overrides, value=default_overrides)
+        script_overrides = gr.CheckboxGroup(label="Overrides", choices=sc.possible_overrides, value=sc.default_overrides)
         with gr.Accordion(label="Prompt overrides", open=False):
             prepend_prompt_text = gr.Textbox(label="Text to prepend", lines=1,
                                              elem_id=self.elem_id("prepend_prompt_text"))
@@ -71,6 +71,7 @@ class Script(scripts.Script):
 
         import modules.images as img
         import modules.generation_parameters_copypaste as gpc
+        from modules import sd_models as sdm
 
         def update_dict_keys(obj, mapping_dict):
             if isinstance(obj, dict):
