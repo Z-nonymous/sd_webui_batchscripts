@@ -31,7 +31,7 @@ class Script(scripts.Script):
     # The returned values are passed to the run method as parameters.
 
     def ui(self, is_txt2img):
-        sc.ui(self)
+        return sc.ui(self)
 
     # This is where the additional processing is implemented. The parameters include
     # self, the model object "p" (a StableDiffusionProcessing class, see
