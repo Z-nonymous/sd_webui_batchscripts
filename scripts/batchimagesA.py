@@ -148,7 +148,7 @@ class Script(scripts.Script):
                     jobs.append(formated_args)
                     overrides.append(override_settings)
 
-        print(f"Will process {len(lines)} lines in {job_count} jobs.")
+        print(f"Read {len(lines)} lines, will process {len(jobs)} jobs generating {job_count} images.")
 
         images = []
         all_prompts = []
