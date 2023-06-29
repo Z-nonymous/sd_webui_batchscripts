@@ -15,24 +15,23 @@ arg_mapping = {
     'Hires resize-1': 'hr_resize_x',
     'Hires resize-2': 'hr_resize_y',
     'Hires steps': 'hr_second_pass_steps',
-    'First pass size-1': 'skip-1',
-    'First pass size-2': 'skip-2',
-    'Model': 'skip-3',
-    'Hypernet': 'skip-4',
-    'Hypernet strength': 'skip-5',
-    'Aesthetic LR': 'skip-6',
-    'Aesthetic text': 'skip-7',
-    'Aesthetic slerp': 'skip-8',
-    'Aesthetic steps': 'skip-9',
-    'Aesthetic weight': 'skip-10',
-    'Aesthetic embedding': 'skip-11',
-    'Aesthetic slerp angle': 'skip-12',
-    'Aesthetic text negative': 'skip-13',
+    # 'First pass size-1': 'skip-1',
+    # 'First pass size-2': 'skip-2',
+    # 'Model': 'skip-3',
+    # 'Hypernet': 'skip-4',
+    # 'Hypernet strength': 'skip-5',
+    # 'Aesthetic LR': 'skip-6',
+    # 'Aesthetic text': 'skip-7',
+    # 'Aesthetic slerp': 'skip-8',
+    # 'Aesthetic steps': 'skip-9',
+    # 'Aesthetic weight': 'skip-10',
+    # 'Aesthetic embedding': 'skip-11',
+    # 'Aesthetic slerp angle': 'skip-12',
+    # 'Aesthetic text negative': 'skip-13',
     'Conditional mask weight': 'inpainting_mask_weight',  # goes to override
     'ENSD': 'eta_noise_seed_delta',  # goes to override
     'Noise multiplier': 'initial_noise_multiplier',  # goes to override
     'Eta': 'eta_ancestral',  # goes to override instead of using 'eta'
-    # 'Eta': 'eta_ancestral',
     'Eta DDIM': 'eta_ddim',  # goes to override
     'Discard penultimate sigma': 'always_discard_next_to_last_sigma',  # goes to override
     'Variation seed': 'subseed',

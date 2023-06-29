@@ -74,7 +74,7 @@ class Script(scripts.Script):
 
         def update_dict_keys(obj, mapping_dict):
             if isinstance(obj, dict):
-                return {mapping_dict[k]: update_dict_keys(v, mapping_dict) for k, v in obj.items()}
+                return {mapping_dict[k]: update_dict_keys(v, mapping_dict) for k, v in obj.items() if mapping_dict.get(k)}
             else:
                 return obj
 
@@ -97,9 +97,6 @@ class Script(scripts.Script):
             formated_args = {}
             res = gpc.parse_generation_parameters(block)
             args = update_dict_keys(res, sc.arg_mapping)
-
-            for i in range(1, 21):
-                args.pop(f'skip-{i}', None)
 
             for ovr in sc.possible_overrides:
                 if ovr in script_overrides:
